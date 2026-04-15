@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Test de Autoridad en WhatsApp</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #ffffff;
+            color: #0f172a;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .avatar-alive { animation: float 3.5s ease-in-out infinite; }
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .floating-bubble {
+            position: absolute;
+            opacity: 0;
+            animation: floatBubbleCycle 14s infinite;
+            background: #d1fae5;
+            color: #064e3b;
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 8px 14px;
+            border-radius: 12px;
+            border-bottom-left-radius: 2px;
+            border: 1px solid #4ade80;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 10;
+        }
+        @keyframes floatBubbleCycle {
+            0% { opacity: 0; transform: translateY(10px) scale(0.95); }
+            5% { opacity: 1; transform: translateY(0) scale(1); }
+            15% { opacity: 1; transform: translateY(0) scale(1); }
+            20% { opacity: 0; transform: translateY(-15px) scale(0.95); }
+            100% { opacity: 0; transform: translateY(-15px) scale(0.95); }
+        }
+
+        .typing-dot { animation: typing 1.4s infinite ease-in-out both; }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+        .chat-bubble-ai { border-radius: 1rem 1rem 1rem 0.25rem; }
+        .chat-bubble-user { border-radius: 1rem 1rem 0.25rem 1rem; }
+        
+        .bg-pattern {
+            background-image: radial-gradient(#cbd5e1 1.5px, transparent 1.5px);
+            background-size: 24px 24px;
+            background-color: #ffffff;
+        }
+        
+        .typewriter-cursor {
+            display: inline-block;
+            width: 4px;
+            height: 14px;
+            background-color: #1F8743;
+            margin-left: 2px;
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* Pulsos para el mapa de 6 pasos (Temática Blanca/Verde) */
+        @keyframes pulse-border-green {
+            0% { box-shadow: 0 0 0 0 rgba(31, 135, 67, 0.4); }
+            70% { box-shadow: 0 0 0 12px rgba(31, 135, 67, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(31, 135, 67, 0); }
+        }
+        @keyframes pulse-border-red {
+            0% { box-shadow: 0 0 0 0 rgba(254, 44, 85, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(254, 44, 85, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(254, 44, 85, 0); }
+        }
+        .pulse-green { animation: pulse-border-green 1.5s infinite; }
+        .pulse-red { animation: pulse-border-red 1.5s infinite; }
+
+        .whatsapp-loader { width: 50px; height: 50px; border-radius: 50%; display: inline-block; position: relative; animation: rotate 1s linear infinite; }
+        .whatsapp-loader::before, .whatsapp-loader::after { content: ""; box-sizing: border-box; position: absolute; inset: 0px; border-radius: 50%; border: 4px solid #1F8743; animation: prixClipFix 2s linear infinite ; }
+        .whatsapp-loader::after{ border-color: #128C7E; animation: prixClipFix 2s linear infinite , rotate 0.5s linear infinite reverse; inset: 6px; }
+
+        @keyframes rotate { 0% {transform: rotate(0deg)} 100% {transform: rotate(360deg)} }
+        @keyframes prixClipFix {
+            0%   {clip-path:polygon(50% 50%,0 0,0 0,0 0,0 0,0 0)}
+            25%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 0,100% 0,100% 0)}
+            50%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,100% 100%,100% 100%)}
+            75%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,0 100%,0 100%)}
+            100% {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,0 100%,0 0)}
+        }
+        
+        .animate-spin-slow { animation: spin 4s linear infinite; }
+        
+        .chat-scroll { scroll-behavior: smooth; overflow-y: auto; overflow-x: hidden; }
+        .chat-scroll::-webkit-scrollbar { width: 4px; }
+        .chat-scroll::-webkit-scrollbar-track { background: transparent; }
+        .chat-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    </style>
+</head>
+<body class="antialiased pb-20">
+
+    <div id="progress-container" class="fixed top-0 left-0 w-full h-1.5 bg-slate-200 z-50 hidden">
+        <div id="progress-bar" class="h-full bg-[#1F8743] transition-all duration-500 ease-out" style="width: 0%;"></div>
+    </div>
+
+    <main class="max-w-md mx-auto min-h-screen bg-white shadow-xl relative overflow-hidden flex flex-col" id="main-app-container">
+        
+        <!-- PANTALLA 1: INTRODUCCIÓN -->
+        <section id="screen-intro" class="flex flex-col min-h-screen fade-in bg-pattern">
+            <div class="p-6 pt-12 pb-10 flex-1 flex flex-col relative z-10">
+                <h1 class="text-[42px] md:text-5xl font-black text-[#10301D] leading-[1.05] mb-2 uppercase tracking-tight">
+                    REVELAR MIS FUGAS DE VENTAS
+                </h1>
+
+                <span class="text-[12px] font-black tracking-widest text-[#2A6540] uppercase mb-4 block">
+                    PARA PROFESIONALES Y DUEÑOS DE NEGOCIO
+                </span>
+                
+                <h2 class="text-[20px] font-extrabold text-[#10301D] mb-8 leading-snug">
+                    EL ESCÁNER DE FUGAS DE VENTAS: Descubre en 60 segundos por qué tu perfil de WhatsApp espanta clientes.
+                </h2>
+
+                <div class="relative w-full flex justify-center mb-8">
+                    <div class="bg-white rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.08)] border border-slate-100 p-3 flex items-center w-full relative">
+                        <div class="relative w-16 h-16 bg-white rounded-full border-[3px] border-[#1F8743] flex items-center justify-center avatar-alive shrink-0 z-20 shadow-md">
+                            <svg viewBox="0 0 100 100" class="w-9 h-9" xmlns="http://www.w3.org/2000/svg">
+                                <line x1="50" y1="34" x2="50" y2="18" stroke="#1F8743" stroke-width="4" stroke-linecap="round"/>
+                                <circle cx="50" cy="12" r="5" fill="#1F8743"/>
+                                <rect x="22" y="34" width="56" height="38" rx="10" fill="transparent" stroke="#1F8743" stroke-width="4"/>
+                                <line x1="22" y1="53" x2="12" y2="53" stroke="#1F8743" stroke-width="4" stroke-linecap="round"/>
+                                <line x1="78" y1="53" x2="88" y2="53" stroke="#1F8743" stroke-width="4" stroke-linecap="round"/>
+                                <rect x="34" y="44" width="32" height="10" rx="5" fill="#1F8743"/>
+                                <path d="M 38 60 Q 50 68 62 60" stroke="#1F8743" stroke-width="4" fill="none" stroke-linecap="round"/>
+                            </svg>
+                            <svg viewBox="0 0 24 24" class="absolute -top-1 -right-1 w-4 h-4 text-yellow-400 animate-pulse" fill="currentColor"><path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/></svg>
+                            <svg viewBox="0 0 24 24" class="absolute top-7 -left-3 w-3 h-3 text-yellow-400 animate-pulse" fill="currentColor" style="animation-delay: 1s;"><path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/></svg>
+                            <svg viewBox="0 0 24 24" class="absolute -bottom-1 right-1 w-3 h-3 text-yellow-400 animate-pulse" fill="currentColor" style="animation-delay: 0.5s;"><path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/></svg>
+                        </div>
+                        <div class="relative flex-1 h-14 ml-4 pointer-events-none">
+                            <div class="absolute left-1 bottom-1 flex items-center gap-1 opacity-60">
+                                <div class="w-1.5 h-1.5 bg-[#1F8743] rounded-full typing-dot" style="animation-delay: 0s;"></div>
+                                <div class="w-1.5 h-1.5 bg-[#1F8743] rounded-full typing-dot" style="animation-delay: 0.2s;"></div>
+                                <div class="w-1.5 h-1.5 bg-[#1F8743] rounded-full typing-dot" style="animation-delay: 0.4s;"></div>
+                            </div>
+                            <div class="floating-bubble" style="bottom: 16px; left: 0px; animation-delay: 0s;">"Me dejan en visto..."</div>
+                            <div class="floating-bubble" style="bottom: 16px; left: 0px; animation-delay: 2s;">"Solo me piden 'info'."</div>
+                            <div class="floating-bubble" style="bottom: 16px; left: 0px; animation-delay: 4s;">"Puros curiosos, nadie compra."</div>
+                            <div class="floating-bubble" style="bottom: 16px; left: 0px; animation-delay: 6s;">"Me dicen 'está muy caro'."</div>
+                            <div class="floating-bubble" style="bottom: 16px; left: 0px; animation-delay: 8s;">"Pierdo horas en WhatsApp."</div>
+                            <div class="floating-bubble" style="bottom: 16px; left: 0px; animation-delay: 10s;">"Siento que ruego por ventas."</div>
+                            <div class="floating-bubble" style="bottom: 16px; left: 0px; animation-delay: 12s;">"Me leen y desaparecen."</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-[#F4F1E1] rounded-2xl p-6 mb-8 shadow-sm border border-[#E8E4D0]">
+                    <p class="text-[17px] font-bold text-[#14311F] leading-relaxed">
+                        "Haz que tus prospectos confíen en ti y te compren al instante, sin que te dejen en 'visto' ni regalarle ventas a tu competencia por tener un perfil poco profesional."
+                    </p>
+                </div>
+                <div class="flex-1"></div>
+                <button onclick="startTest()" class="w-full bg-[#1F8743] text-white font-bold text-[18px] py-4 px-4 rounded-xl shadow-xl shadow-[#1F8743]/30 hover:bg-[#186b34] transition-all active:scale-95 transform flex items-center justify-center gap-2 border-b-4 border-[#125327] mt-4">
+                    👉 VER POR QUÉ PIERDO CLIENTES
+                </button>
+            </div>
+        </section>
+
+        <!-- PANTALLA 2: EL TEST -->
+        <section id="screen-quiz" class="hidden flex flex-col h-screen bg-slate-50">
+            <div class="bg-white px-4 py-3 flex items-center sticky top-0 z-20 shadow-sm border-b border-slate-100">
+                <div class="relative">
+                    <div class="w-11 h-11 bg-white rounded-full flex items-center justify-center overflow-hidden border-2 border-slate-200 shadow-sm">
+                        <svg viewBox="0 0 100 100" class="w-7 h-7" xmlns="http://www.w3.org/2000/svg">
+                            <line x1="50" y1="34" x2="50" y2="18" stroke="#1F8743" stroke-width="5" stroke-linecap="round"/>
+                            <circle cx="50" cy="12" r="6" fill="#1F8743"/>
+                            <rect x="22" y="34" width="56" height="38" rx="10" fill="transparent" stroke="#1F8743" stroke-width="5"/>
+                            <line x1="22" y1="53" x2="12" y2="53" stroke="#1F8743" stroke-width="5" stroke-linecap="round"/>
+                            <line x1="78" y1="53" x2="88" y2="53" stroke="#1F8743" stroke-width="5" stroke-linecap="round"/>
+                            <rect x="34" y="44" width="32" height="10" rx="5" fill="#1F8743"/>
+                            <path d="M 38 60 Q 50 68 62 60" stroke="#1F8743" stroke-width="5" fill="none" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></div>
+                </div>
+                <div class="ml-3">
+                    <h3 class="font-bold text-slate-800 text-[16px] leading-tight">Estratega de WhatsApp</h3>
+                    <p id="chat-status-text" class="text-xs text-slate-500 font-medium tracking-wide">en línea</p>
+                </div>
+            </div>
+
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 pb-32"></div>
+            
+            <div class="bg-white border-t border-slate-200 p-3 fixed bottom-0 w-full max-w-md flex items-center justify-center text-xs text-slate-400 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+                <i data-lucide="lock" class="w-3 h-3 mr-1 inline"></i> Respuestas cifradas y seguras.
+            </div>
+        </section>
+
+        <!-- PANTALLA 3: PANTALLA DE CARGA -->
+        <div id="screen-loading" class="hidden fade-in w-full h-full flex-col items-center justify-center pb-20 z-40 bg-white bg-pattern absolute inset-0">
+            <div class="bg-white p-10 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] flex flex-col items-center border border-slate-200">
+                <div class="whatsapp-loader mb-6"></div>
+                <h2 class="text-xl font-bold text-center text-[#1F8743] animate-pulse">Analizando tu perfil...</h2>
+            </div>
+        </div>
+
+        <!-- PANTALLA 4: RESULTADOS SECUENCIALES Y MAPA -->
+        <div id="screen-result" class="hidden fade-in w-full h-full flex-col justify-start pt-2 pb-8 overflow-y-auto chat-scroll z-50 bg-white bg-pattern absolute inset-0" style="max-height: 100vh;">
+            <div class="p-4 flex flex-col relative pb-10">
+                
+                <div class="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border border-slate-200 rounded-2xl p-3 mb-4 flex flex-col gap-3 shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="relative flex-shrink-0 w-9 h-9">
+                            <div class="w-full h-full rounded-full bg-white flex items-center justify-center shadow-sm border-2 border-[#1F8743] relative z-10">
+                                <svg viewBox="0 0 100 100" class="w-5 h-5 text-[#1F8743]" xmlns="http://www.w3.org/2000/svg">
+                                    <line x1="50" y1="34" x2="50" y2="18" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+                                    <circle cx="50" cy="12" r="7" fill="currentColor"/>
+                                    <rect x="22" y="34" width="56" height="38" rx="10" fill="transparent" stroke="currentColor" stroke-width="6"/>
+                                    <line x1="22" y1="53" x2="12" y2="53" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+                                    <line x1="78" y1="53" x2="88" y2="53" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+                                    <rect x="34" y="44" width="32" height="10" rx="5" fill="currentColor"/>
+                                    <path d="M 38 60 Q 50 68 62 60" stroke="currentColor" stroke-width="6" fill="none" stroke-linecap="round"/>
+                                </svg>
+                            </div>
+                            <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-[#1F8743] font-extrabold text-[13px] tracking-wide">Estratega de WhatsApp</span>
+                            <span id="ia-status-text" class="text-slate-500 text-[11px] flex items-center gap-1 font-medium">
+                                escribiendo...
+                            </span>
+                        </div>
+                    </div>
+
+                    <div id="ia-nav-menu" class="hidden flex gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden" style="scrollbar-width: none;">
+                        <button id="nav-btn-0" onclick="scrollToBlock('res-block-1')" class="hidden opacity-0 transform translate-y-2 transition-all duration-300 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-[11px] font-bold px-3 py-1.5 rounded-xl whitespace-nowrap active:scale-95 shadow-sm">📊 Tu Diagnóstico</button>
+                        <button id="nav-btn-1" onclick="scrollToBlock('res-block-2')" class="hidden opacity-0 transform translate-y-2 transition-all duration-300 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-[11px] font-bold px-3 py-1.5 rounded-xl whitespace-nowrap active:scale-95 shadow-sm">🔓 Bono Desbloqueado</button>
+                        <button id="nav-btn-3" onclick="scrollToBlock('res-block-4')" class="hidden opacity-0 transform translate-y-2 transition-all duration-300 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-[11px] font-bold px-3 py-1.5 rounded-xl whitespace-nowrap active:scale-95 shadow-sm">🗺️ Tu Atajo de Ventas</button>
+                        <button id="nav-btn-5" onclick="scrollToBlock('res-block-6')" class="hidden opacity-0 transform translate-y-2 transition-all duration-300 bg-green-50 border border-green-200 hover:bg-green-100 text-[#1F8743] text-[11px] font-bold px-3 py-1.5 rounded-xl whitespace-nowrap active:scale-95 shadow-sm">🚀 Hablar con Experto</button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl p-5 md:p-6 border-l-4 border-[#1F8743] shadow-lg relative z-10" id="main-result-box">
+                    
+                    <div id="res-block-1" class="hidden animate-[fadeIn_0.5s_ease-out_forwards]">
+                        <h2 class="text-lg font-bold mb-2 text-slate-500 uppercase tracking-wide">📊 Tu Resultado:</h2>
+                        <p class="text-2xl font-extrabold text-slate-900 mb-4 leading-tight">¡Tienes los prospectos, pero tu perfil los está enviando con tu competencia! <span class="text-red-600 text-lg block mt-1">(30% de Autoridad Detectada)</span></p>
+                        <div class="space-y-3 text-[15px] text-slate-700 leading-relaxed">
+                            <p>¡No te desanimes! Tienes lo más difícil a tu favor: las personas ya te están contactando y tienes la herramienta correcta. Ese es un gran primer paso.</p>
+                            <p>El diagnóstico nos muestra algo revelador: las preguntas que acabas de responder son solo la punta del iceberg, pero suficientes para detectar que tu perfil actual levanta las defensas de tus prospectos. En los primeros 3 segundos, al no percibir una estructura persuasiva clara, el cerebro del cliente te clasifica automáticamente como 'un vendedor más' y no como la máxima autoridad de tu sector.</p>
+                            <p>¿El resultado? Te regatean el precio, te comparan o simplemente te dejan en visto. Y ojo, no es tu culpa: a todos nos enseñaron a usar WhatsApp para chatear, no como una máquina de cierres de alto valor.</p>
+                        </div>
+                    </div>
+
+                    <div id="res-block-2" class="hidden mt-8 animate-[fadeIn_0.5s_ease-out_forwards]">
+                        <div class="bg-slate-50 p-5 rounded-xl border border-slate-200 relative shadow-sm">
+                            <div class="absolute -top-3 left-4 bg-[#1F8743] text-white text-[11px] font-extrabold px-3 py-1 rounded-full uppercase tracking-widest shadow-md">🔓 Bono Desbloqueado</div>
+                            <div class="relative z-10 mt-2">
+                                <h3 class="text-slate-900 font-bold text-lg mb-2">La Fórmula de Autoridad Instantánea</h3>
+                                <p class="mb-4 text-[14px] leading-snug text-slate-700">Por haber completado este test con honestidad, has desbloqueado una victoria rápida para que tu perfil deje de espantar clientes hoy mismo.</p>
+                                <div class="bg-green-50 p-4 rounded-lg border-l-4 border-green-500 text-[14px] leading-relaxed">
+                                    <span class="text-slate-800 block mb-2 font-medium">El error actual es que tu sección de "Info" (tu biografía de WhatsApp) no le dice al cliente qué problema le resuelves. Cambia tu texto genérico por esta fórmula exacta:</span>
+                                    <span class="font-bold text-green-900">"Ayudo a [Menciona a tu Cliente Ideal] a lograr [Su Resultado Soñado] sin [Su Mayor Miedo o Problema]".</span>
+                                    <span class="block mt-2 text-green-800 italic">(Ejemplo: Ayudo a dueños de negocio a duplicar sus ventas sin tener que perseguir prospectos).</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="res-block-3" class="hidden mt-6 animate-[fadeIn_0.5s_ease-out_forwards]">
+                        <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                            <h3 class="text-slate-900 font-bold text-lg mb-2">La Buena Noticia:</h3>
+                            <p class="mb-3 text-[15px] text-slate-700 leading-relaxed">No necesitas ser un genio de la tecnología, ni pasar horas rogándole a la gente por mensaje para que te compren. Solo necesitas dejar de improvisar.</p>
+                            <p class="mb-0 text-[15px] text-slate-700 leading-relaxed">Imagina tener un sistema inteligente donde tu perfil filtra a los curiosos en automático, y tú solo platicas por WhatsApp usando preguntas diseñadas para que los prospectos que sí tienen dinero se convenzan a sí mismos de pagarte.</p>
+                        </div>
+                    </div>
+                </div> 
+                
+                <div id="res-block-4" class="hidden mt-8 mb-2 animate-[fadeIn_0.5s_ease-out_forwards]">
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 relative overflow-hidden shadow-inner">
+                        <p class="text-[14px] text-slate-700 mb-4 leading-relaxed">
+                            👇 Aquí está la realidad: El tip de tu descripción que te acabo de regalar corresponde SOLAMENTE al Paso 1. Te muestro <span class="text-slate-900 font-bold">el mapa exacto de 5 pasos</span> que aplicamos para cerrar ventas por WhatsApp:
+                        </p>
+
+                        <ul class="text-[13px] text-slate-600 mb-8 space-y-2 pl-1">
+                            <li class="flex items-start gap-2"><span class="text-[#1F8743] font-bold">•</span> <span>Autoridad Visual (Tu Perfil) 👈 <span class="font-semibold text-slate-800">¡El tip que te di solo cubre esta pieza!</span></span></li>
+                            <li class="flex items-start gap-2"><span class="text-[#1F8743] font-bold">•</span> <span>Filtro de Curiosos (Mensaje de Bienvenida Estratégico)</span></li>
+                            <li class="flex items-start gap-2"><span class="text-[#1F8743] font-bold">•</span> <span>Sondeo del Dolor (Preguntas de neuro-persuasión)</span></li>
+                            <li class="flex items-start gap-2"><span class="text-[#1F8743] font-bold">•</span> <span>El Atajo / Tu Oferta (Presentar la solución sin rogar)</span></li>
+                            <li class="flex items-start gap-2"><span class="text-[#1F8743] font-bold">•</span> <span>¡Cierre Logrado! 🎉 (Transacción sin fricción)</span></li>
+                        </ul>
+                        
+                        <div class="relative w-full h-[340px] mt-10 mb-4">
+                            <div class="absolute top-[15%] left-[25%] w-[50%] border-t-[2px] border-dashed border-slate-300 -translate-y-1/2 z-0"></div>
+                            <div class="absolute top-[15%] left-[75%] h-[35%] border-l-[2px] border-dashed border-slate-300 -translate-x-1/2 z-0"></div>
+                            <div class="absolute top-[50%] left-[25%] w-[50%] border-t-[2px] border-dashed border-slate-300 -translate-y-1/2 z-0"></div>
+                            <div class="absolute top-[50%] left-[25%] h-[35%] border-l-[2px] border-dashed border-slate-300 -translate-x-1/2 z-0"></div>
+                            <div class="absolute top-[85%] left-[25%] w-[50%] border-t-[2px] border-dashed border-slate-300 -translate-y-1/2 z-0"></div>
+
+                            <div id="line-1" class="absolute top-[15%] left-[25%] h-[2px] bg-[#1F8743] transition-all ease-linear w-0 -translate-y-1/2 z-0 shadow-[0_0_8px_#1F8743]"></div>
+                            <div id="line-2" class="absolute top-[15%] left-[75%] w-[2px] bg-[#1F8743] transition-all ease-linear h-0 -translate-x-1/2 z-0 shadow-[0_0_8px_#1F8743]"></div>
+                            <div id="line-3" class="absolute top-[50%] right-[25%] h-[2px] bg-[#1F8743] transition-all ease-linear w-0 -translate-y-1/2 z-0 shadow-[0_0_8px_#1F8743]"></div>
+                            <div id="line-4" class="absolute top-[50%] left-[25%] w-[2px] bg-[#1F8743] transition-all ease-linear h-0 -translate-x-1/2 z-0 shadow-[0_0_8px_#1F8743]"></div>
+                            <div id="line-5" class="absolute top-[85%] left-[25%] h-[2px] bg-[#1F8743] transition-all ease-linear w-0 -translate-y-1/2 z-0 shadow-[0_0_8px_#1F8743]"></div>
+
+                            <div id="step-1" class="absolute top-[15%] left-[25%] transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center w-20 z-20 cursor-pointer" onclick="runProcess()">
+                                <div id="pop-start" class="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-[#1F8743] text-white px-3 py-1.5 rounded-full text-[10px] font-extrabold whitespace-nowrap animate-bounce shadow-lg">
+                                    👆 Comienzo del sistema - Toca aquí
+                                    <div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-[#1F8743] rotate-45"></div>
+                                </div>
+                                <div class="pop-up absolute -top-8 left-1/2 transform -translate-x-1/2 bg-[#1F8743] text-white px-2 py-1 rounded text-[10px] font-bold whitespace-nowrap opacity-0 transition-all duration-300 scale-50 shadow-md">
+                                    Autoridad Visual
+                                    <div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-[#1F8743] rotate-45"></div>
+                                </div>
+                                <div class="icon-bg w-10 h-10 rounded-full bg-white border-[3px] border-[#1F8743] flex items-center justify-center mb-1.5 shadow-[0_0_15px_rgba(31,135,67,0.4)] pulse-green transition-all duration-300">
+                                    <svg class="w-5 h-5 text-[#1F8743]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                                </div>
+                                <span class="step-text text-[10px] font-bold text-[#1F8743] text-center leading-tight opacity-0 transition-opacity duration-300">1. Tu Perfil</span>
+                            </div>
+
+                            <div id="step-2" class="absolute top-[15%] left-[75%] transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center w-20 z-10">
+                                <div class="pop-up absolute -top-8 left-1/2 transform -translate-x-1/2 bg-[#1F8743] text-white px-2 py-1 rounded text-[10px] font-bold whitespace-nowrap opacity-0 transition-all duration-300 scale-50 shadow-md z-20">
+                                    Filtro Automático
+                                    <div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-[#1F8743] rotate-45"></div>
+                                </div>
+                                <div class="icon-bg w-10 h-10 rounded-full bg-slate-100 border-2 border-slate-300 flex items-center justify-center mb-1.5 opacity-50 transition-all duration-300">
+                                    <svg class="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+                                </div>
+                                <span class="step-text text-[10px] font-bold text-slate-400 text-center leading-tight opacity-0 transition-opacity duration-300">2. Bienvenida</span>
+                            </div>
+
+                            <div id="step-3" class="absolute top-[50%] left-[75%] transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center w-24 z-10">
+                                <div class="pop-up absolute -top-8 left-1/2 transform -translate-x-1/2 bg-[#1F8743] text-white px-2 py-1 rounded text-[10px] font-bold whitespace-nowrap opacity-0 transition-all duration-300 scale-50 shadow-md z-20">
+                                    Sondeo del Dolor
+                                    <div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-[#1F8743] rotate-45"></div>
+                                </div>
+                                <div class="icon-bg w-10 h-10 rounded-full bg-slate-100 border-2 border-slate-300 flex items-center justify-center mb-1.5 opacity-50 transition-all duration-300">
+                                    <svg class="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
+                                </div>
+                                <span class="step-text text-[10px] font-bold text-slate-400 text-center leading-tight opacity-0 transition-opacity duration-300">3. Sondeo</span>
+                            </div>
+
+                            <div id="step-4" class="absolute top-[50%] left-[25%] transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center w-24 z-10">
+                                <div class="pop-up absolute -top-8 left-1/2 transform -translate-x-1/2 bg-[#1F8743] text-white px-2 py-1 rounded text-[10px] font-bold whitespace-nowrap opacity-0 transition-all duration-300 scale-50 shadow-md z-20">
+                                    Construir Confianza
+                                    <div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-[#1F8743] rotate-45"></div>
+                                </div>
+                                <div class="icon-bg w-10 h-10 rounded-full bg-slate-100 border-2 border-slate-300 flex items-center justify-center mb-1.5 opacity-50 transition-all duration-300">
+                                    <svg class="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                                </div>
+                                <span class="step-text text-[10px] font-bold text-slate-400 text-center leading-tight opacity-0 transition-opacity duration-300">4. El Puente</span>
+                            </div>
+
+                            <div id="step-5" class="absolute top-[85%] left-[25%] transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center w-24 z-10">
+                                <div class="pop-up absolute -top-8 left-1/2 transform -translate-x-1/2 bg-[#1F8743] text-white px-2 py-1 rounded text-[10px] font-bold whitespace-nowrap opacity-0 transition-all duration-300 scale-50 shadow-md z-20">
+                                    Sin Rogar
+                                    <div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-[#1F8743] rotate-45"></div>
+                                </div>
+                                <div class="icon-bg w-10 h-10 rounded-full bg-slate-100 border-2 border-slate-300 flex items-center justify-center mb-1.5 opacity-50 transition-all duration-300">
+                                    <svg class="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" /></svg>
+                                </div>
+                                <span class="step-text text-[10px] font-bold text-slate-400 text-center leading-tight opacity-0 transition-opacity duration-300">5. Tu Oferta</span>
+                            </div>
+
+                            <div id="step-6" class="absolute top-[85%] left-[75%] transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center w-24 z-10">
+                                <div class="pop-up absolute -top-8 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-3 py-1.5 rounded text-[11px] font-extrabold whitespace-nowrap opacity-0 transition-all duration-300 scale-50 shadow-lg z-20">
+                                    ¡Transacción! 🎉
+                                    <div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-red-500 rotate-45"></div>
+                                </div>
+                                <div class="icon-bg w-12 h-12 rounded-full bg-slate-100 border-2 border-slate-300 flex items-center justify-center mb-1.5 opacity-50 transition-all duration-300">
+                                    <svg class="w-6 h-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                </div>
+                                <span class="step-text text-[12px] font-extrabold text-slate-400 text-center leading-tight opacity-0 transition-opacity duration-300 drop-shadow-sm">6. ¡Cierre!</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="res-block-5" class="hidden mt-4 animate-[fadeIn_0.5s_ease-out_forwards]">
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-md">
+                        <h3 class="text-slate-900 font-bold text-lg mb-3">🔍 Descubre las piezas que te faltan</h3>
+                        <p class="text-[15px] text-slate-700 mb-4 leading-relaxed">Las ventas no caen del cielo ni se cierran "solas" simplemente por tener un WhatsApp Business. Detrás de cada uno de estos 5 pasos hay un trabajo analítico y psicológico profundo. La dura realidad es que la mayoría de los profesionales pierden ventas a diario simplemente porque no tienen un proceso definido y se quedan estancados en el Paso 1.</p>
+                        <p class="text-[15px] text-slate-700 mb-4 leading-relaxed">Si quieres que hagamos una Auditoría Rápida <span class="text-[#1F8743] font-bold">GRATUITA</span> de tu negocio para descubrir exactamente en qué punto de tu chat se están escapando tus ventas y qué piezas necesitas armar para dominar los pasos y empezar a cerrar clientes de verdad, agenda una charla de 15 minutos aquí.</p>
+                        <p class="text-[13px] text-slate-500 bg-slate-50 p-3 rounded-lg border border-slate-100 italic">Sin presiones y sin compromisos; solo analizaremos tu situación actual para ver si realmente podemos ayudarte a construir el sistema de cierres que te falta. Si no somos el equipo adecuado para ti, te lo diremos con total honestidad.</p>
+                    </div>
+                </div>
+
+                <div id="res-block-6" class="hidden mt-6 animate-[fadeIn_0.5s_ease-out_forwards]">
+                    <a href="https://calendly.com/" 
+                       target="_blank"
+                       class="w-full bg-[#1F8743] hover:bg-[#186b34] text-white font-extrabold py-5 px-4 rounded-xl shadow-xl flex items-center justify-center transition-transform active:scale-95 text-[17px] text-center leading-tight relative z-20 border-b-4 border-[#125327]">
+                        👉 Hablar con un Experto
+                    </a>
+                </div>
+
+                <div id="result-typing-indicator" class="hidden flex items-center gap-3 mt-4 mb-2 p-2">
+                    <svg class="w-5 h-5 text-[#1F8743] animate-spin-slow" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
+                    <div class="flex items-center bg-slate-100 rounded-full px-3 py-1.5 border border-slate-200 shadow-sm">
+                        <span class="typing-dot bg-[#1F8743] w-1.5 h-1.5 mx-0.5"></span>
+                        <span class="typing-dot bg-[#1F8743] w-1.5 h-1.5 mx-0.5"></span>
+                        <span class="typing-dot bg-[#1F8743] w-1.5 h-1.5 mx-0.5"></span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        lucide.createIcons();
+
+        const customBotSVG = `
+            <svg viewBox="0 0 100 100" class="w-6 h-6" xmlns="http://www.w3.org/2000/svg">
+                <line x1="50" y1="34" x2="50" y2="18" stroke="#1F8743" stroke-width="5" stroke-linecap="round"/>
+                <circle cx="50" cy="12" r="6" fill="#1F8743"/>
+                <rect x="22" y="34" width="56" height="38" rx="10" fill="transparent" stroke="#1F8743" stroke-width="5"/>
+                <line x1="22" y1="53" x2="12" y2="53" stroke="#1F8743" stroke-width="5" stroke-linecap="round"/>
+                <line x1="78" y1="53" x2="88" y2="53" stroke="#1F8743" stroke-width="5" stroke-linecap="round"/>
+                <rect x="34" y="44" width="32" height="10" rx="5" fill="#1F8743"/>
+                <path d="M 38 60 Q 50 68 62 60" stroke="#1F8743" stroke-width="5" fill="none" stroke-linecap="round"/>
+            </svg>
+        `;
+
+        const questions = [
+            { 
+                id: 1, 
+                title: "Tu Herramienta", 
+                text: 'Para empezar tu diagnóstico, ¿desde qué aplicación atiendes a tus clientes hoy en día?', 
+                btnYes: '🔘 A) WhatsApp Business.', 
+                btnNo: '🔘 B) WhatsApp Normal (Mi número personal).',
+                renderNoFirst: false 
+            },
+            { 
+                id: 2, 
+                title: "Tu Privacidad", 
+                text: 'Entendiendo que la seguridad es importante, si un cliente nuevo te escribe hoy, ¿puede ver tu foto?', 
+                btnYes: '🔘 A) Sí, está visible para "Todos".', 
+                btnNo: '🔘 B) No, La mantengo restringida por temas personales o de seguridad.',
+                renderNoFirst: false 
+            },
+            { 
+                id: 3, 
+                title: "Tu Imagen", 
+                text: 'Sobre la foto que tienes ahora mismo en tu perfil en WhatsApp: ¿Qué estilo tiene?', 
+                btnYes: '🔘 A) Profesional (proyecta autoridad inmediata).', 
+                btnNo: '🔘 B) Selfie estilo casual/lifestyle.',
+                renderNoFirst: false 
+            },
+            { 
+                id: 4, 
+                title: "Tu Bienvenida", 
+                text: '¿Qué dice actualmente la sección de "Info" (tu biografía) debajo de tu foto?', 
+                btnYes: '🔘 A) Explica claramente qué problema le resuelvo al cliente.',
+                btnNo: '🔘 B) Tiene mi horario, un emoji, o una frase motivacional/personal.', 
+                renderNoFirst: false 
+            },
+            { 
+                id: 5, 
+                title: "Tus Respuestas", 
+                text: 'Cuando un prospecto pide "info", ¿cómo le respondes normalmente?', 
+                btnYes: '🔘 A) Le hago una pregunta estratégica para entender su necesidad.',
+                btnNo: '🔘 B) Le hago una pregunta estrategica y le mando mis servicios con precios o un PDF de inmediato.',
+                renderNoFirst: false 
+            },
+            { 
+                id: 6, 
+                title: "Vitrina Digital", 
+                text: '¿Tengo el "Catálogo" de WhatsApp configurado y activo?', 
+                btnNo: '🔘 A) Aún no lo configuro pero lo haré.', 
+                btnYes: '🔘 B) Sí, lo tengo activo con mis productos/servicios principales.',
+                renderNoFirst: true 
+            },
+            { 
+                id: 7, 
+                title: "Tu Diferencia Real", 
+                text: 'Si alguien que NO te conoce llega a tu perfil, ¿entiende en 3 segundos por qué eres su mejor opción?', 
+                btnYes: '🔘 A) Totalmente. Mi perfil destaca mi mayor ventaja para que no me comparen por precio.',
+                btnNo: '🔘 B) Casi todos mis clientes llegan por recomendación, así que mi perfil solo tiene mi información de contacto normal.',
+                renderNoFirst: false 
+            }
+        ];
+
+        let currentAnswers = {};
+        let currentQuestionIndex = 0;
+
+        const screenIntro = document.getElementById('screen-intro');
+        const screenQuiz = document.getElementById('screen-quiz');
+        const screenLoading = document.getElementById('screen-loading');
+        const screenResult = document.getElementById('screen-result');
+        const chatMessages = document.getElementById('chat-messages');
+        const progressBar = document.getElementById('progress-bar');
+        const progressContainer = document.getElementById('progress-container');
+
+        function scrollToBottom() {
+            setTimeout(() => {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 50);
+        }
+
+        function showTypingIndicator(id) {
+            const statusText = document.getElementById('chat-status-text');
+            if (statusText) statusText.innerText = 'escribiendo...';
+
+            const typingDiv = document.createElement('div');
+            typingDiv.id = `typing-${id}`;
+            typingDiv.className = 'flex w-full mt-2 space-x-3 max-w-xs fade-in';
+            typingDiv.innerHTML = `
+                <div class="flex-shrink-0 w-10 h-10 bg-white rounded-full border-[2px] border-[#1F8743] flex items-center justify-center relative shadow-sm mt-1">
+                    ${customBotSVG}
+                    <svg viewBox="0 0 24 24" class="absolute -top-1 -right-1 w-3 h-3 text-[#1F8743] animate-pulse" fill="currentColor"><path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/></svg>
+                    <svg viewBox="0 0 24 24" class="absolute top-6 -left-1.5 w-2 h-2 text-[#1F8743] animate-pulse" fill="currentColor" style="animation-delay: 1s;"><path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/></svg>
+                    <svg viewBox="0 0 24 24" class="absolute -bottom-0.5 right-0.5 w-2.5 h-2.5 text-[#1F8743] animate-pulse" fill="currentColor" style="animation-delay: 0.5s;"><path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/></svg>
+                </div>
+                <div class="bg-white p-3 rounded-2xl chat-bubble-ai border border-slate-200 shadow-sm flex items-center gap-1">
+                    <div class="w-2 h-2 bg-slate-400 rounded-full typing-dot"></div>
+                    <div class="w-2 h-2 bg-slate-400 rounded-full typing-dot"></div>
+                    <div class="w-2 h-2 bg-slate-400 rounded-full typing-dot"></div>
+                </div>
+            `;
+            chatMessages.appendChild(typingDiv);
+            lucide.createIcons();
+            scrollToBottom();
+            return typingDiv;
+        }
+
+        function startTest() {
+            screenIntro.classList.add('hidden');
+            screenQuiz.classList.remove('hidden');
+            screenQuiz.classList.add('fade-in');
+            progressContainer.classList.remove('hidden');
+            askQuestion(currentQuestionIndex);
+        }
+
+        function askQuestion(index) {
+            const q = questions[index];
+            const typingId = `q-${q.id}`;
+            const typingElement = showTypingIndicator(typingId);
+
+            setTimeout(() => {
+                typingElement.remove();
+
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'flex w-full mt-4 space-x-3 fade-in';
+                
+                let buttonsHtml = '';
+                let btnYesText = q.btnYes || 'SÍ';
+                let btnNoText = q.btnNo || 'NO';
+                
+                let yesAlignClass = (btnYesText.trim().toUpperCase() === 'SÍ' || btnYesText.trim().toUpperCase() === 'NO') ? 'justify-center text-center' : 'justify-start text-left';
+                let noAlignClass = (btnNoText.trim().toUpperCase() === 'SÍ' || btnNoText.trim().toUpperCase() === 'NO') ? 'justify-center text-center' : 'justify-start text-left';
+
+                if (q.renderNoFirst) {
+                    buttonsHtml = `
+                        <button onclick="handleAnswer(${q.id}, false)" class="w-full bg-white border border-slate-300 text-slate-700 font-bold py-2.5 px-4 rounded-xl shadow-sm hover:bg-slate-50 transition-all active:scale-95 flex items-center ${noAlignClass}"><span>${btnNoText}</span></button>
+                        <button onclick="handleAnswer(${q.id}, true)" class="w-full bg-white border border-slate-300 text-slate-700 font-bold py-2.5 px-4 rounded-xl shadow-sm hover:bg-slate-50 transition-all active:scale-95 flex items-center ${yesAlignClass}"><span>${btnYesText}</span></button>
+                    `;
+                } else {
+                    buttonsHtml = `
+                        <button onclick="handleAnswer(${q.id}, true)" class="w-full bg-white border border-slate-300 text-slate-700 font-bold py-2.5 px-4 rounded-xl shadow-sm hover:bg-slate-50 transition-all active:scale-95 flex items-center ${yesAlignClass}"><span>${btnYesText}</span></button>
+                        <button onclick="handleAnswer(${q.id}, false)" class="w-full bg-white border border-slate-300 text-slate-700 font-bold py-2.5 px-4 rounded-xl shadow-sm hover:bg-slate-50 transition-all active:scale-95 flex items-center ${noAlignClass}"><span>${btnNoText}</span></button>
+                    `;
+                }
+
+                questionDiv.innerHTML = `
+                    <div class="flex-shrink-0 w-10 h-10 bg-white rounded-full border-[2px] border-[#1F8743] flex items-center justify-center relative shadow-sm mt-1">
+                        ${customBotSVG}
+                        <svg viewBox="0 0 24 24" class="absolute -top-1 -right-1 w-3 h-3 text-[#1F8743] animate-pulse" fill="currentColor"><path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/></svg>
+                        <svg viewBox="0 0 24 24" class="absolute top-6 -left-1.5 w-2 h-2 text-[#1F8743] animate-pulse" fill="currentColor" style="animation-delay: 1s;"><path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/></svg>
+                        <svg viewBox="0 0 24 24" class="absolute -bottom-0.5 right-0.5 w-2.5 h-2.5 text-[#1F8743] animate-pulse" fill="currentColor" style="animation-delay: 0.5s;"><path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/></svg>
+                    </div>
+                    <div class="flex-1">
+                        <div class="bg-white p-4 rounded-2xl chat-bubble-ai border border-slate-200 shadow-sm text-slate-800 text-[15px] leading-relaxed">
+                            <span class="text-xs font-bold text-[#1F8743] uppercase tracking-wider block mb-1">Pregunta ${index + 1}/7 • ${q.title}</span>
+                            <span id="typewriter-${q.id}"></span><span id="cursor-${q.id}" class="typewriter-cursor"></span>
+                        </div>
+                        <div id="options-container-${q.id}" class="hidden flex-col gap-2 mt-3 pl-1 fade-in">
+                            <div class="flex flex-col gap-2">${buttonsHtml}</div>
+                            <div class="flex items-center gap-1.5 mt-1.5 ml-1 text-[12px] font-bold text-slate-500 animate-pulse">
+                                <i data-lucide="sparkles" class="w-4 h-4"></i> Esperando tu respuesta...
+                            </div>
+                        </div>
+                    </div>
+                `;
+                chatMessages.appendChild(questionDiv);
+                lucide.createIcons();
+                scrollToBottom();
+
+                const textTarget = document.getElementById(`typewriter-${q.id}`);
+                const cursorTarget = document.getElementById(`cursor-${q.id}`);
+                let charIndex = 0;
+                const typingSpeed = 20;
+
+                function typeWriter() {
+                    if (charIndex < q.text.length) {
+                        textTarget.innerHTML += q.text.charAt(charIndex);
+                        charIndex++;
+                        scrollToBottom();
+                        setTimeout(typeWriter, typingSpeed);
+                    } else {
+                        cursorTarget.style.display = 'none';
+                        const optionsContainer = document.getElementById(`options-container-${q.id}`);
+                        optionsContainer.classList.remove('hidden');
+                        optionsContainer.classList.add('flex');
+                        scrollToBottom();
+                        
+                        const statusText = document.getElementById('chat-status-text');
+                        if (statusText) statusText.innerText = 'en línea';
+                    }
+                }
+                typeWriter();
+            }, 600);
+        }
+
+        function handleAnswer(questionId, isYes) {
+            currentAnswers[questionId] = isYes;
+            document.getElementById(`options-container-${questionId}`).style.display = 'none';
+
+            const currentQ = questions.find(q => q.id === questionId);
+            const replyText = isYes ? currentQ.btnYes : currentQ.btnNo;
+
+            const userReply = document.createElement('div');
+            userReply.className = 'flex w-full mt-4 space-x-3 justify-end fade-in';
+            userReply.innerHTML = `
+                <div class="bg-[#10301D] p-3 px-5 rounded-2xl chat-bubble-user text-white text-[15px] shadow-sm font-medium">
+                    ${replyText}
+                </div>
+            `;
+            chatMessages.appendChild(userReply);
+            scrollToBottom();
+
+            const progressPercentage = (Object.keys(currentAnswers).length / questions.length) * 100;
+            progressBar.style.width = `${progressPercentage}%`;
+
+            const typingFeedbackId = `f-${questionId}`;
+            const typingElement = showTypingIndicator(typingFeedbackId);
+
+            setTimeout(() => {
+                typingElement.remove();
+                const statusText = document.getElementById('chat-status-text');
+                if (statusText) statusText.innerText = 'en línea';
+
+                const feedbackDiv = document.createElement('div');
+                feedbackDiv.className = 'flex w-full mt-4 space-x-3 fade-in';
+                
+                if (isYes) {
+                    feedbackDiv.innerHTML = `
+                        <div class="flex-shrink-0 w-10 h-10 bg-white rounded-full border-[2px] border-[#1F8743] flex items-center justify-center relative shadow-sm mt-1">
+                            ${customBotSVG}
+                            <svg viewBox="0 0 24 24" class="absolute -top-1 -right-1 w-3 h-3 text-[#1F8743] animate-pulse" fill="currentColor"><path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/></svg>
+                        </div>
+                        <div class="bg-green-50 border border-green-200 p-3 rounded-2xl chat-bubble-ai text-green-800 text-sm flex items-center gap-2 shadow-sm">
+                            <i data-lucide="check-circle-2" class="w-5 h-5 text-green-600"></i> ¡Excelente base!
+                        </div>
+                    `;
+                } else {
+                    feedbackDiv.innerHTML = `
+                        <div class="flex-shrink-0 w-10 h-10 bg-white rounded-full border-[2px] border-[#1F8743] flex items-center justify-center relative shadow-sm mt-1">
+                            ${customBotSVG}
+                            <svg viewBox="0 0 24 24" class="absolute -top-1 -right-1 w-3 h-3 text-[#1F8743] animate-pulse" fill="currentColor"><path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/></svg>
+                        </div>
+                        <div class="bg-red-50 border border-red-200 p-3 rounded-2xl chat-bubble-ai text-red-800 text-sm flex items-center gap-2 shadow-sm shake">
+                            <i data-lucide="alert-triangle" class="w-5 h-5 text-red-600"></i> Fuga de dinero detectada.
+                        </div>
+                    `;
+                }
+                
+                chatMessages.appendChild(feedbackDiv);
+                lucide.createIcons();
+                scrollToBottom();
+
+                setTimeout(() => {
+                    currentQuestionIndex++;
+                    if (currentQuestionIndex < questions.length) {
+                        askQuestion(currentQuestionIndex);
+                    } else {
+                        showLeadForm();
+                    }
+                }, 1200);
+
+            }, 600);
+        }
+
+        function showLeadForm() {
+            const typingElement = showTypingIndicator('end');
+            setTimeout(() => {
+                typingElement.remove();
+                const statusText = document.getElementById('chat-status-text');
+                if (statusText) statusText.innerText = 'en línea';
+
+                document.getElementById('screen-quiz').classList.add('hidden');
+                document.getElementById('progress-container').classList.add('hidden');
+                
+                document.getElementById('screen-loading').classList.remove('hidden');
+                window.scrollTo(0, 0);
+
+                setTimeout(() => {
+                    document.getElementById('screen-loading').classList.add('hidden');
+                    document.getElementById('screen-result').classList.remove('hidden');
+                    revealResultsSequentially(); 
+                }, 2500);
+            }, 800);
+        }
+
+        // ==========================================
+        // MOTOR DE REVELACIÓN IA Y MAPA INTERACTIVO
+        // ==========================================
+        function revealResultsSequentially() {
+            const blocks = ['res-block-1', 'res-block-2', 'res-block-3', 'res-block-4', 'res-block-5', 'res-block-6'];
+            const typingInd = document.getElementById('result-typing-indicator');
+            const headerStatus = document.getElementById('ia-status-text');
+            const screenResult = document.getElementById('screen-result');
+
+            let delayTotal = 0;
+            const delays = [800, 2500, 2000, 2500, 3000, 1500]; 
+
+            typingInd.classList.remove('hidden');
+            
+            const updateStatus = () => {
+                headerStatus.innerHTML = '<span class="text-[#1F8743] font-medium tracking-wide">escribiendo...</span>';
+            };
+
+            updateStatus();
+
+            blocks.forEach((blockId, index) => {
+                delayTotal += delays[index];
+                
+                if (index === 1) { 
+                    setTimeout(() => updateStatus("Bono Desbloqueado..."), delayTotal - delays[index]);
+                } else if (index === 3) { 
+                    setTimeout(() => updateStatus("Tu Atajo de Ventas"), delayTotal - delays[index]);
+                }
+
+                setTimeout(() => {
+                    const el = document.getElementById(blockId);
+                    if(el) el.classList.remove('hidden');
+
+                    document.getElementById('ia-nav-menu').classList.remove('hidden');
+                    const navBtnId = index === 0 ? 'nav-btn-0' : (index === 1 ? 'nav-btn-1' : (index === 3 ? 'nav-btn-3' : (index === 5 ? 'nav-btn-5' : null)));
+                    if(navBtnId) {
+                        const navBtn = document.getElementById(navBtnId);
+                        if(navBtn) {
+                            navBtn.classList.remove('hidden');
+                            setTimeout(() => {
+                                navBtn.classList.remove('opacity-0', 'translate-y-2');
+                                navBtn.classList.add('opacity-100', 'translate-y-0');
+                            }, 50);
+                        }
+                    }
+                    
+                    setTimeout(() => {
+                        screenResult.scrollTo({
+                            top: screenResult.scrollHeight,
+                            behavior: 'smooth'
+                        });
+                    }, 50);
+
+                    if (index === blocks.length - 1) {
+                        typingInd.classList.add('hidden');
+                        setTimeout(() => {
+                            screenResult.scrollTo({ top: 0, behavior: 'smooth' });
+                            headerStatus.innerHTML = '<span class="text-slate-500 font-medium tracking-wide">en línea</span>';
+                            enableDynamicScrollStatus();
+                        }, 2000); 
+                    }
+                }, delayTotal);
+            });
+        }
+
+        function scrollToBlock(blockId) {
+            const el = document.getElementById(blockId);
+            const screenResult = document.getElementById('screen-result');
+            if (el && screenResult) {
+                const offset = el.offsetTop - 140; 
+                screenResult.scrollTo({
+                    top: offset > 0 ? offset : 0,
+                    behavior: 'smooth'
+                });
+            }
+        }
+
+        function enableDynamicScrollStatus() {
+            const headerStatus = document.getElementById('ia-status-text');
+            const screenResult = document.getElementById('screen-result');
+            headerStatus.innerHTML = '<span class="text-slate-500 font-medium tracking-wide">en línea</span>';
+
+            screenResult.addEventListener('scroll', () => {
+                const b1 = document.getElementById('res-block-1')?.getBoundingClientRect().top || 0;
+                const b2 = document.getElementById('res-block-2')?.getBoundingClientRect().top || 0;
+                const b4 = document.getElementById('res-block-4')?.getBoundingClientRect().top || 0;
+                const b6 = document.getElementById('res-block-6')?.getBoundingClientRect().top || 0;
+                
+                const triggerPoint = window.innerHeight / 2.5; 
+
+                if (b6 < window.innerHeight - 50) { 
+                    headerStatus.innerHTML = '<span class="text-slate-500 font-medium tracking-wide">en línea</span>';
+                } else if (b4 < triggerPoint) {
+                    headerStatus.innerHTML = '<span class="text-slate-500 font-medium tracking-wide">en línea</span>';
+                } else if (b2 < triggerPoint) {
+                    headerStatus.innerHTML = '<span class="text-slate-500 font-medium tracking-wide">en línea</span>';
+                } else {
+                    headerStatus.innerHTML = '<span class="text-slate-500 font-medium tracking-wide">en línea</span>';
+                }
+            });
+        }
+
+        let isProcessRunning = false;
+        function drawLine(id, dimension, targetValue, duration) {
+            const line = document.getElementById(id);
+            if(!line) return;
+            line.style.transitionDuration = duration + 'ms';
+            if(dimension === 'width') line.style.width = targetValue;
+            if(dimension === 'height') line.style.height = targetValue;
+        }
+
+        function activateStep(stepId, isFinal) {
+            const el = document.getElementById(stepId);
+            if(!el) return;
+            const iconBg = el.querySelector('.icon-bg');
+            const stepText = el.querySelector('.step-text');
+            const popUp = el.querySelector('.pop-up');
+
+            if (iconBg) {
+                iconBg.classList.remove('opacity-50', 'bg-slate-100', 'border-slate-300');
+                iconBg.classList.add('opacity-100', 'bg-white');
+                
+                if (isFinal) { 
+                    iconBg.classList.add('border-[#FE2C55]', 'pulse-red');
+                    iconBg.querySelector('svg').classList.remove('text-slate-400');
+                    iconBg.querySelector('svg').classList.add('text-[#FE2C55]');
+                } else {
+                    iconBg.classList.add('border-[#1F8743]', 'pulse-green');
+                    iconBg.querySelector('svg').classList.remove('text-slate-400');
+                    iconBg.querySelector('svg').classList.add('text-[#1F8743]');
+                }
+            }
+            if (stepText) { 
+                stepText.classList.remove('opacity-0'); 
+                stepText.classList.add('opacity-100'); 
+            }
+            if (popUp) {
+                popUp.classList.remove('opacity-0', 'scale-50');
+                popUp.classList.add('opacity-100', 'scale-100', 'animate-bounce');
+                setTimeout(() => popUp.classList.remove('animate-bounce'), 2000);
+            }
+        }
+
+        function runProcess() {
+            if(isProcessRunning) return;
+            isProcessRunning = true;
+            const popStart = document.getElementById('pop-start');
+            if(popStart) popStart.style.display = 'none';
+
+            const timeL1 = 1136, timeL2 = 795, timeL3 = 1136, timeL4 = 795, timeL5 = 1136; 
+
+            activateStep('step-1', false);
+            drawLine('line-1', 'width', '50%', timeL1);
+
+            setTimeout(() => { activateStep('step-2', false); drawLine('line-2', 'height', '35%', timeL2); }, timeL1);
+            setTimeout(() => { activateStep('step-3', false); drawLine('line-3', 'width', '50%', timeL3); }, timeL1 + timeL2);
+            setTimeout(() => { activateStep('step-4', false); drawLine('line-4', 'height', '35%', timeL4); }, timeL1 + timeL2 + timeL3);
+            setTimeout(() => { activateStep('step-5', false); drawLine('line-5', 'width', '50%', timeL5); }, timeL1 + timeL2 + timeL3 + timeL4);
+            setTimeout(() => { activateStep('step-6', true); }, timeL1 + timeL2 + timeL3 + timeL4 + timeL5);
+        }
+    </script>
+</body>
+</html>
